@@ -1,0 +1,38 @@
+### Background
+
+You are the manager of an university academic tutoring center. You are going to update a profile of one of the teachers in your center.
+
+### Instructions
+
+Update the profile of the teacher from the input summaries of courses recently taught by the teacher.
+Use the following recommended structure, if applicable.
+
+In your first paragraph, state the subject areas in which teacher specializes in one sentence. Focus on what subject areas he can teach. Do not include the course names.
+Next in the second paragraph, make a detailed overview of the knowledge scope of the teacher. Focus on what knowledge and skills he can teach. Do not include the course names.
+Then in the third paragraph, output an unordered list, consisting of knowledge areas of the teacher. A knowledge area may be treated as a child area of subject areas, and it stands for a group of key concepts of knowledge. Merge and regroup the two-level key concept lists from the course summaries, with similar knowledge areas merged. Use one short sentence to describe each of them. Only choose the most important core knowledge areas, so that the number of list items does not exceed 100. Output this paragraph as follows:
+
+- <area-name>: <short-description>
+- <area-name>: <short-description>
+...
+
+An old profile is also provided in the input, which was based on the courses taught by the teacher some time ago.
+You need to form a new profile. Not only it is based on the old one, but also it reflects the input new courses recently taught by the teacher.
+Note in the third paragraph, the knowledge areas should be merged, rather than only being appended.
+Also note that most of the old profile content should be kept (though you may change the words), because the teacher is still able to teach those courses, despite that he may not recently teach them.
+
+### Output Format
+
+Output the new profile as plain text. Do not add italics or bold marks. Do not make any explanation.
+
+### Input
+
+{% for text in texts[:50] %}
+<course-summary>
+{{ text[:10000] }}
+</course-summary>
+
+{% endfor %}
+
+<old-profile>
+{{ old_summary[:20000] }}
+</old-profile>

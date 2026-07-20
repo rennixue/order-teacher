@@ -1,0 +1,312 @@
+openapi: 3.1.0
+info:
+  title: 订单匹配讲师
+  version: v2607201534
+servers:
+  - url: http://47.96.19.145:10809/api
+security: []
+paths:
+  /health:
+    get:
+      operationId: get_health
+      summary: 确认服务状态
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/BaseResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                            enum:
+                              - UP
+                              - DOWN
+                        required:
+                          - status
+                    required:
+                      - data
+        '4XX':
+          $ref: "#/components/responses/HTTP4XX"
+        '5XX':
+          $ref: "#/components/responses/HTTP5XX"
+  /job:
+    post:
+      operationId: post_job
+      summary: 提交匹配任务
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                order_id:
+                  type: integer
+              required:
+                - order_id
+      responses:
+        '202':
+          description: ok
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/BaseResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          job_id:
+                            type: integer
+                          status:
+                            type: string
+                            enum:
+                              - pend
+                          order_id:
+                            type: integer
+                          err_msg:
+                            type: 'null'
+                        required:
+                          - job_id
+                          - status
+                          - order_id
+                          - err_msg
+                    required:
+                      - data
+        '400':
+          description: >
+            订单不存在，或产品类型不被接受。
+            接受 0 定制辅导、1 考前突击、26 包课辅导、65 论文大礼包、67 毕业大论文、71 作业辅导。
+            不接受 27 论文润色、64 班课辅导、66 特殊订单、69 文案类、70 实习类、72 Course Package。
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/BaseResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          job_id:
+                            type: integer
+                          status:
+                            type: string
+                            enum:
+                              - fail
+                          order_id:
+                            type: integer
+                          err_msg:
+                            type: string
+                        required:
+                          - job_id
+                          - status
+                          - order_id
+                          - err_msg
+                    required:
+                      - data
+        '422':
+          $ref: "#/components/responses/HTTP422"
+        '4XX':
+          $ref: "#/components/responses/HTTP4XX"
+        '5XX':
+          $ref: "#/components/responses/HTTP5XX"
+  /job/{jobId}/status:
+    get:
+      operationId: get_job_status
+      summary: 查询匹配任务状态
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/JobId"
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/BaseResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          job_id:
+                            type: integer
+                          status:
+                            type: string
+                            enum:
+                              - pend
+                              - succeed
+                              - fail
+                        required:
+                          - job_id
+                          - status
+                    required:
+                      - data
+        '422':
+          $ref: "#/components/responses/HTTP422"
+        '4XX':
+          $ref: "#/components/responses/HTTP4XX"
+        '5XX':
+          $ref: "#/components/responses/HTTP5XX"
+  /job/{jobId}/result:
+    get:
+      operationId: get_job_result
+      summary: 查询匹配任务结果
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/JobId"
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/BaseResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          job_id:
+                            type: integer
+                          status:
+                            type: string
+                            enum:
+                              - pend
+                              - succeed
+                              - fail
+                          order_id:
+                            type: integer
+                          err_msg:
+                            type: [string, 'null']
+                          matches:
+                            type: array
+                            items:
+                              $ref: "#/components/schemas/TeacherMatch"
+                        required:
+                          - job_id
+                          - status
+                          - order_id
+                          - err_msg
+                          - matches
+                    required:
+                      - data
+        '422':
+          $ref: "#/components/responses/HTTP422"
+        '4XX':
+          $ref: "#/components/responses/HTTP4XX"
+        '5XX':
+          $ref: "#/components/responses/HTTP5XX"
+  /feedback:
+    post:
+      operationId: post_feedback
+      summary: 提交讲师反馈
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                order_id:
+                  type: integer
+                teacher_id:
+                  type: integer
+                choice:
+                  type: [integer, 'null']
+                message:
+                  type: string
+              required:
+                - order_id
+                - teacher_id
+                - message
+      responses:
+        '202':
+          description: ok
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/BaseResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                    required:
+                      - data
+        '422':
+          $ref: "#/components/responses/HTTP422"
+        '4XX':
+          $ref: "#/components/responses/HTTP4XX"
+        '5XX':
+          $ref: "#/components/responses/HTTP5XX"
+components:
+  responses:
+    HTTP422:
+      description: client incorrect format
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/BaseResponse"
+    HTTP4XX:
+      description: client error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/BaseResponse"
+    HTTP5XX:
+      description: server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/BaseResponse"
+  schemas:
+    BaseResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+        msg:
+          type: string
+      required:
+        - code
+        - msg
+    JobId:
+      type: integer
+    TeacherMatch:
+      type: object
+      properties:
+        no:
+          type: integer
+          summary: 从1开始的匹配序号
+        teacher_id:
+          type: integer
+          summary: 讲师id
+        tier:
+          type: integer
+          summary: 业务方规定的从0开始的优先级
+        prof_score:
+          type: number
+          summary: 专业匹配性分数，与classbro上专业无关，0-1之间
+      required:
+        - no
+        - teacher_id
+        - tier
+        - prof_score

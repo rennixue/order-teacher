@@ -1,0 +1,35 @@
+### Background
+
+You are arranging some materials of a university course.
+Names of the materials are listed as inputs, with their ids. The name is either a file name, or a path-like string showing the folders containing the file as well as its name, which means the file is extracted from an archive.
+There may be duplicates in the materials. In this case, choose only one representative.
+
+### Instructions
+
+Select the materials which look like lectures or module guide documents or student's works, and output their ids.
+A lecture material is likely to contain "lecture", "week", "unit", or "session" in its name, optionally with the lecture topic. Sometimes its name only present the lecture topic. Choose a set of lectures if any, which does not required to be complete, because the materials themselves may not be complete.
+A module guide material is likely to contain "module guide", "unit guide", "handbook", "syllabus", or the course code in its name. Choose at most one module guide if any.
+A student work is a proposal, plan, draft, or completed work of his writing assessment or dissertation, or just notes on the current progress. Its filename may be in Chinese, or it may include the student's name.
+
+Do not select other type of course materials, such as the tutorials, seminars, workshops, exercises, quizzes, exams, solutions, textbooks, supplement readings, assessment requirements, finished assignments, etc.
+
+The output ids should be organized with the module guide comes first, followed by the lectures, and the student's works at last.
+The lectures should be organized in the actual lecture or week order, instead of numerical sorting.
+Again, note the materials may not contain the module guide, student's works, or even may not contain any lectures. In this case, output an empty array for ids.
+
+### Output Format
+
+Output the selected material ids in the format of the following json object. Do not make any explanation.
+If no materials are selected, let the "ids" field be an empty array.
+
+```json
+{"ids": [0]}
+```
+
+### Input
+
+<materials>
+{% for name in names[:100] %}
+ID: {{ loop.index }}, Name: {{ name }}
+{% endfor %}
+</materials>

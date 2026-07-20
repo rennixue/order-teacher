@@ -1,0 +1,28 @@
+### Background
+
+You are arranging some materials of a university course.
+Names of the materials are listed as inputs, with their ids. The name is either a file name, or a path-like string showing the folders containing the file as well as its name, which means the file is extracted from an archive.
+There may be duplicates in the materials. In this case, choose only one representative.
+
+### Instructions
+
+Make a summary of the input course material, which is likely to be a module guide, a lecture, or the student's work of his writing assessment or dissertation.
+Use the following recommended structure, if applicable.
+
+In your first paragraph, state what type of course material it is. If it is a lecture, then state which lecture / week / unit it is, and the main topic of the lecture.
+Next in the second paragraph, make an overview of the material content.
+Then in the third paragraph, output an unordered list.
+If the material is a lecture, then the list should consist of names of key concepts of knowledge or skills, and use one short sentence to describe each of them. Output like "- <name>: <short-description>" for each item. Only choose the most important core concepts, so that the number of list items do not exceed 20.
+If the material is a module guide, then the list should consist of lecture topics or core learning content described in the material directly. Do not make up by yourself.
+
+### Output Format
+
+Output the summary as plain text. Do not add italics or bold marks. Do not make any explanation.
+
+### Input
+
+<material>
+{{ name }}
+
+{{ text[:100000] }}
+</material>

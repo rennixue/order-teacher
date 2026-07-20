@@ -1,0 +1,38 @@
+### Instructions
+
+There is an report card of a university student in the input.
+Extract the university name, and the course grades that the student achieved.
+For each course, output its course code, course name, and the grade as strings.
+The grade can be 0-100 (100 points), 0.0-4.0 (GPA), ABCD (level), etc. Just output in the original format as a string.
+Output in the original language of the report card.
+
+There is also a list of possible universities that this report card belongs to. Find out which university it is, and output its id as an integer.
+If the report card belong to none of the input possible universities, output -1 as the value of the university id.
+
+### Output Format
+
+Output the extracted information in the format of the following json object. Do not make any explanation.
+If nothing can be known for a field, then let that field be an empty string.
+If there are no courses, then let the "grades" field be an empty array.
+
+```json
+{
+  "university": "",
+  "university_id": 0,
+  "grades": [
+    {"course_code": "", "course_name": "", "grade": ""}
+  ]
+}
+```
+
+### Input
+
+<possible-universities>
+{% for univ_id, univ_name in univ_pairs %}
+- (id: {{ univ_id }}) {{ univ_name }}
+{% endfor %}
+</possible-universities>
+
+<report-card>
+{{ text[:100000] }}
+</report-card>

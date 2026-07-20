@@ -1,0 +1,24 @@
+### Instructions
+
+There is an resume document in the input. The candidate is applying for the position of university level academic tutor.
+Extract the subject areas of academic knowledge he excels in, as well as the skills he is professional at.
+The skills should only include the academic skills, language skills, and software or programming skills.
+Output in the original language of the resume.
+
+### Output Format
+
+Output the extracted information in the format of the following json object. Do not make any explanation.
+If nothing can be found for a field, then let that field be an empty array.
+
+```json
+{
+  "subject_areas": [""],
+  "skills": [""]
+}
+```
+
+### Input
+
+<resume>
+{{ text[:50000] }}
+</resume>

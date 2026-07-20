@@ -1,0 +1,30 @@
+### Background
+
+You are an academic tutor. You have made a summary of a course from its lecture materials.
+
+### Instructions
+
+Select which major ids that the course belongs to or closely related to. At least 1, at most 3 major ids can be selected.
+If it is clear that the course belongs to which major, just one single major id should be selected.
+If the course is interdisciplinary, usually multiple major ids should be selected.
+
+### Output Format
+
+Output the selected major ids in the format of the following json object. Do not make any explanation.
+If only one major id is selected, still output the "ids" field as a one-element array.
+
+```json
+{"ids": [0]}
+```
+
+### Input
+
+<summary>
+{{ summary }}
+</summary>
+
+<majors>
+{% for it in professions %}
+ID: {{ loop.index }}, Name: {{ it.en_name }} ({{ it.zh_name }})
+{% endfor %}
+<majors>

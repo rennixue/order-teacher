@@ -1,0 +1,37 @@
+### Background
+
+As the manager of a university academic tutoring center, you have a student client who seeks tutoring for a particular course.
+You haved evaluated which teachers in your center are qualified to teach that course, and now you are evaluating who are the best suitable ones among the qualifies teachers.
+
+### Instructions
+
+A summary of the course materials, as well as summaries of the knowledge scope of each teacher, are all listed in the input section.
+Some special requirements, if any, are also attached to the course summary.
+Select the teachers who seem suitable for this course, and list their ids in the order of descending suitability, with the most suitable teachers come at first.
+A teacher is suitable to teach if his knowledge scope covers most of the course content. There is no need to cover all.
+All teachers who are suitable should be listed, rather than the best suitable teachers. Most of the qualified teachers are suitable to teach.
+
+### Output Format
+
+Output the teacher ids in the format of the following json object. Do not make any explanation.
+If only one teacher is suitable, output the "ids" field as a one-element array.
+If no teacher is suitable, output the "ids" field as an empty array.
+
+```json
+{"ids": [0]}
+```
+
+### Input
+
+<course>
+{{ course[:50000] }}
+</course>
+
+<teachers>
+{% for teacher in teachers %}
+<teacher id={{ loop.index }}>
+{{ teacher[:10000] }}
+</teacher>
+
+{% endfor %}
+</teachers>
