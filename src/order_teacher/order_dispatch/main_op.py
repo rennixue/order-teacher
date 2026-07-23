@@ -208,3 +208,9 @@ class MainOperation:
             await self._database.update_course(
                 univ_id, course_code, new_summary, order_id, course_name, prof_id, spec_id
             )
+
+    async def refresh_teacher_feedback(self, order_id: int, teacher_id: int, message: str) -> None:
+        try:
+            await self._match_op.refresh_feedback(order_id, teacher_id, message)
+        except Exception as exc:
+            logger.error("fail to refresh_feedback: %r", exc)

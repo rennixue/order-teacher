@@ -288,3 +288,14 @@ class Agent(BaseAgent):
         return output
 
     refresh_course = with_fallback(_refresh_course, lambda self, course, order: "")
+
+    @retry(reraise=True, stop=stop_after_attempt(2))
+    async def _cannot_teach(self, message: str) -> bool:
+        if not message:
+            return False
+        user_msg = self._templates["match/cannot_teach"].render(message=message)
+        answer = await self._ask(user_msg, stream=False, max_completion_tokens=16)
+        output = answer.nonempty_content.strip().strip('"').lower()
+        return output.startswith("yes")
+
+    cannot_teach = with_fallback(_cannot_teach, lambda self, message: False)

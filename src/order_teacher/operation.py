@@ -183,24 +183,32 @@ class OperationService:
             if not any(it[0] == teacher_id for it in mut_triples):
                 mut_triples.append((teacher_id, 0.0, 11))
 
-        if ORDER_TYPES[order.order_type]["parent_type"] == "period":
-            same_code_teacher_ids = order.t_same_code
-            try:
-                same_code_forbid_teacher_ids = await self._daobi_database.select_forbid(
-                    same_code_teacher_ids,
-                    ORDER_TYPES[order.order_type]["prod_id"],
-                )
-            except Exception:
-                same_code_forbid_teacher_ids = []
-            for teacher_id in same_code_teacher_ids:
-                if teacher_id not in same_code_forbid_teacher_ids:
-                    if not any(it[0] == teacher_id for it in mut_triples):
-                        if student_id := order.student_id:
-                            try:
-                                has_accident = await self._daobi_database.select_teacher_student_accident(
-                                    teacher_id, student_id
-                                )
-                            except Exception:
-                                has_accident = True
-                            if has_accident is False:
-                                mut_triples.append((teacher_id, 0.0, 1))
+        same_code_teacher_ids = order.t_same_code
+        try:
+            same_code_forbid_teacher_ids = await self._daobi_database.select_forbid(
+                same_code_teacher_ids,
+                ORDER_TYPES[order.order_type]["prod_id"],
+            )
+        except Exception:
+            same_code_forbid_teacher_ids = []
+        for teacher_id in same_code_teacher_ids:
+            if teacher_id not in same_code_forbid_teacher_ids:
+                if not any(it[0] == teacher_id for it in mut_triples):
+                    if student_id := order.student_id:
+                        try:
+                            has_accident = await self._daobi_database.select_teacher_student_accident(
+                                teacher_id, student_id
+                            )
+                        except Exception:
+                            has_accident = True
+                        if has_accident is False:
+                            mut_triples.append((teacher_id, 0.0, 1))
+
+    async def add_feedback(self, order_id: int, teacher_id: int, choice: int | None, message: str) -> None:
+        message = message.strip()
+        if not message:
+            return
+        try:
+            await self._main_op.refresh_teacher_feedback(order_id, teacher_id, message)
+        except Exception as exc:
+            logger.error("fail to refresh_teacher_feedback: %r", exc)

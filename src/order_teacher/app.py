@@ -1,12 +1,13 @@
 import asyncio
 import logging
 import os
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import Any, TypedDict, TypeVar, cast
 
 from pydantic import BaseModel, ValidationError
 from starlette.applications import Starlette
+from starlette.background import BackgroundTask
 from starlette.exceptions import HTTPException
 from starlette.requests import Request
 from starlette.responses import HTMLResponse, JSONResponse
@@ -46,7 +47,7 @@ class AppState(TypedDict):
 
 
 @asynccontextmanager
-async def lifespan(app: Starlette) -> AsyncIterator[AppState]:
+async def lifespan(app: Starlette) -> AsyncGenerator[AppState]:
     settings = AppSettings.model_validate({**os.environ})
     daobi_database = DaobiDatabaseService(settings.daobi_database_url)
     database = DatabaseService(settings.database_url)
@@ -182,7 +183,14 @@ async def post_feedback(request: Request[AppState]) -> AppJSONResponse:
     await request.state["database"].create_feedback(
         order_id=req_body.order_id, teacher_id=req_body.teacher_id, choice=req_body.choice, message=req_body.message
     )
-    return AppJSONResponse({}, status_code=202)
+    task = BackgroundTask(
+        request.state["operation"].add_feedback,
+        order_id=req_body.order_id,
+        teacher_id=req_body.teacher_id,
+        choice=req_body.choice,
+        message=req_body.message,
+    )
+    return AppJSONResponse({}, status_code=202, background=task)
 
 
 async def get_doc(request: Request[AppState]) -> HTMLResponse:

@@ -1,14 +1,14 @@
 ### Background
 
 As the manager of a university academic tutoring center, you have a student client who seeks tutoring for a particular course.
-You haved evaluated which teachers in your center are qualified to teach that course, and now you are evaluating who are the best suitable ones among the qualifies teachers.
+You have evaluated which teachers in your center are qualified to teach that course, and now you are evaluating who are the best suitable ones among the qualifies teachers.
 
 ### Instructions
 
 A summary of the course materials, as well as summaries of the knowledge scope of each teacher, are all listed in the input section.
 Some special requirements, if any, are also attached to the course summary.
 Select the teachers who seem suitable for this course, and list their ids in the order of descending suitability, with the most suitable teachers come at first.
-A teacher is suitable to teach if his knowledge scope covers most of the course content. There is no need to cover all.
+A teacher is suitable to teach if his knowledge scope covers most of the course content, and there is no mention that he cannot teach something similar to this course. There is no need to cover all.
 All teachers who are suitable should be listed, rather than the best suitable teachers. Most of the qualified teachers are suitable to teach.
 
 ### Output Format

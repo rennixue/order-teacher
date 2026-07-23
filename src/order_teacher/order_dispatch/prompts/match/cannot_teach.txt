@@ -1,0 +1,31 @@
+### Background
+
+You are the manager of a university academic tutoring center.
+You are asking teachers on whether he is able to tutor a particular course, and the teacher has sent a message to you as his reply.
+
+### Instructions
+
+Decide whether the teacher said that he is not able to teach the course, because he does not have enough knowledge in the subject area, or there is a mismatch between his major and the course.
+Answer "yes" or "no" directly.
+
+For example, if he said "不会", "没法教", "没学过", "专业不符", "学科不匹配", etc., then you should answer "yes". 
+While in the following cases, you should answer "no":
+- He confirmed that he can teach it, like "没问题", "可以排课".
+- He asked a question, such as "没有链接唉", "具体要求是什么".
+- He said that he has no time, like "没空", "下周才有时间", or recommended someone else. This means the teacher has the ability to teach, but cannot due to some other reasons.
+- He simply replied with a name of major or subject, e.g. "管理学". This means the teacher accepted to teach.
+
+Additionally, there are some quick reply rules that the teacher follows:
+- If a teacher replies with 1, then he accepted teaching this course, so you should answer "no".
+- If a teacher replies with 2, then his major mismatches, so you should answer "yes".
+- If a teacher replies with 3, then he has no time to this course, so you should answer "no".
+
+### Output Format
+
+Output only "yes" or "no" directly, without quotes. Do not make any explanation.
+
+### Input
+
+<message>
+{{ message[:10000] }}
+</message>

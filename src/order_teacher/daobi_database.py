@@ -307,6 +307,34 @@ LIMIT 1
             fail_rate, complaint_rate, avg_score = 0.0, 0.0, None
         return fail_rate, complaint_rate, avg_score
 
+    async def select_teacher_prod_stats_v2(self, teacher_id: int, order_type: int) -> tuple[float, float, float | None]:
+        if order_type in (0, 1, 26):
+            calc_order_type = 1001
+        elif order_type in (65, 67, 71):
+            calc_order_type = 1002
+        else:
+            return 0.0, 0.0, None
+        async with self._engine.connect() as conn:
+            cursor = await conn.execute(
+                text("""
+                    SELECT
+                      coalesce(fail_rate, 0.0) fail_rate,
+                      coalesce(complaint_rate, 0.0) complaint_rate,
+                      avg_score
+                    FROM ds_teacher
+                    WHERE teacher_id = :teacher_id
+                    AND data_type = 101
+                    AND order_type = :order_type
+                    AND delete_flag = 0
+                    LIMIT 1
+                """),
+                {"teacher_id": teacher_id, "calc_order_type": calc_order_type},
+            )
+            row = cursor.one_or_none()
+        if row is None:
+            return 0.0, 0.0, None
+        return row[0], row[1], row[2]
+
     async def select_teacher_bad_count(self, teacher_id: int) -> int:
         async with self._engine.connect() as conn:
             cursor = await conn.execute(

@@ -4,7 +4,7 @@ from datetime import datetime
 from sqlalchemy.dialects.mysql.types import DATETIME, INTEGER, MEDIUMTEXT, TEXT, TINYINT, VARCHAR
 from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy.sql import delete, select, text, update
+from sqlalchemy.sql import delete, func, select, text, update
 from sqlalchemy.sql.schema import UniqueConstraint
 
 
@@ -44,6 +44,7 @@ class TeacherUnstableRecord(Base):
     created_at: Mapped[datetime] = mapped_column(DATETIME, server_default=text("CURRENT_TIMESTAMP"))
     data: Mapped[str | None] = mapped_column(MEDIUMTEXT)
     err_msg: Mapped[str | None] = mapped_column(TEXT)
+    feedback: Mapped[str | None] = mapped_column(TEXT)
 
 
 class TeacherMajorRecord(Base):
@@ -310,5 +311,16 @@ class Database:
                     prof_id=prof_id,
                     spec_id=spec_id,
                 )
+            )
+            await session.commit()
+
+    async def update_teacher_feedback(self, teacher_id: int, text: str) -> None:
+        if not text:
+            return
+        async with self._session_factory() as session:
+            await session.execute(
+                update(TeacherUnstableRecord)
+                .where(TeacherUnstableRecord.teacher_id == teacher_id)
+                .values(feedback=func.concat(func.coalesce(TeacherUnstableRecord.feedback, ""), text + "\n"))
             )
             await session.commit()

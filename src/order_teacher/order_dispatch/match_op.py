@@ -21,6 +21,7 @@ class TeacherTriple(NamedTuple):
     teacher_id: int
     stable: ProcessTeacherStableData | None
     unstable: ProcessTeacherUnstableData | None
+    feedback: str | None
 
 
 class MatchOperation:
@@ -69,7 +70,7 @@ class MatchOperation:
         return MatchOrderData(pairs=pairs)
 
     async def _get_teacher_data(self, teacher_id: int) -> TeacherTriple:
-        stable_data, unstable_data = None, None
+        stable_data, unstable_data, feedback = None, None, None
         try:
             stable_record = await self._database.get_latest_teacher_stable(teacher_id)
         except Exception as exc:
@@ -92,7 +93,8 @@ class MatchOperation:
                     unstable_data = ProcessTeacherUnstableData.model_validate_json(unstable_record.data)
                 except ValidationError:
                     logger.error("invalid teacher unstable data format for %s", teacher_id)
-        return TeacherTriple(teacher_id, stable_data, unstable_data)
+                feedback = unstable_record.feedback
+        return TeacherTriple(teacher_id, stable_data, unstable_data, feedback)
 
     async def _sort_teachers_by_order(
         self,
@@ -145,8 +147,8 @@ class MatchOperation:
         if not order_summary:
             logger.warning("empty order summary")
             return [(it[0], 1.0) for it in teacher_datas]
-        teacher_summary_pairs: list[tuple[int, str]] = []
-        for teacher_id, stable, unstable in teacher_datas:
+        teacher_summary_pairs: list[tuple[int, str, str]] = []
+        for teacher_id, stable, unstable, feedback in teacher_datas:
             intro, summary = "", ""
             if stable:
                 if maybe_str := stable.raw_info.intro:
@@ -156,7 +158,7 @@ class MatchOperation:
             teacher_summary = intro + " " + summary
             if not teacher_summary:
                 continue
-            teacher_summary_pairs.append((teacher_id, teacher_summary))
+            teacher_summary_pairs.append((teacher_id, teacher_summary, feedback or ""))
         teacher_ids_long, teacher_ids_short = await self._match_short_long(
             order_summary, teacher_summary_pairs, order_needs
         )
@@ -170,26 +172,53 @@ class MatchOperation:
         ]
 
     async def _match_short_long(
-        self, course_summary: str, teacher_summary_pairs: Sequence[tuple[int, str]], order_needs: str
+        self, course_summary: str, teacher_summary_pairs: Sequence[tuple[int, str, str]], order_needs: str
     ) -> tuple[list[int], list[int]]:
         if not teacher_summary_pairs:
             return [], []
         course_pair = split_paragraphs(course_summary, 3)[:2]
         course_text = course_pair[0] + "\n" + course_pair[1] + "\n\nSpecial Requirements:\n" + order_needs
         teacher_triples = [
-            (teacher_id, (triple := split_paragraphs(teacher_summary, 3))[0], triple[1])
-            for teacher_id, teacher_summary in teacher_summary_pairs
+            (teacher_id, (triple := split_paragraphs(teacher_summary, 3))[0], triple[1], feedback)
+            for teacher_id, teacher_summary, feedback in teacher_summary_pairs
         ]
-        indices_short = await self._agent.short_match(course_text, [it[1] for it in teacher_triples])
+        indices_short = await self._agent.short_match(course_text, [it[1].strip() for it in teacher_triples])
         # NOTE remove this line
         indices_short.extend(i for i in range(len(teacher_triples)) if i not in indices_short)
         teacher_triples_short = [teacher_triples[i] for i in indices_short]
         indices_long = await self._agent.long_match(
             course_text,
-            [it[1] + "\n" + it[2] for it in teacher_triples_short],
+            [(it[1] + "\n" + it[2] + "\n" + " ".join(it[3].split("\n"))).strip() for it in teacher_triples_short],
         )
         teacher_triples_long = [teacher_triples_short[i] for i in indices_long]
         teacher_triples_other = [
             it for it in teacher_triples_short if not any(other[0] == it[0] for other in teacher_triples_long)
         ]
         return [it[0] for it in teacher_triples_long], [it[0] for it in teacher_triples_other]
+
+    async def refresh_feedback(self, order_id: int, teacher_id: int, message: str) -> None:
+        message = message.strip()
+        if message == "1" or message == "3":
+            return
+        if message.startswith("1") or message.endswith("1") or message.startswith("3") or message.endswith("3"):
+            return
+        if not (message == "2" or await self._agent.cannot_teach(message)):
+            return
+        order_record = await self._database.get_latest_order(order_id)
+        if order_record is None or not order_record.data:
+            return
+        order_data = ProcessOrderData.model_validate_json(order_record.data)
+        course_name = order_data.raw_info.course_name
+        if summary := order_data.summary:
+            short_summary = split_paragraphs(summary, 3)[0]
+        else:
+            short_summary = None
+        if course_name and short_summary:
+            text = f"This teacher cannot teach {course_name}, which is about: {short_summary}"
+        elif course_name:
+            text = f"This teacher cannot teach {course_name}."
+        elif short_summary:
+            text = f"This teacher cannot teach a course about: {short_summary}"
+        else:
+            return
+        await self._database.update_teacher_feedback(teacher_id, text)
