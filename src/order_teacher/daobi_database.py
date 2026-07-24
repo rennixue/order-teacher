@@ -328,12 +328,12 @@ LIMIT 1
                     AND delete_flag = 0
                     LIMIT 1
                 """),
-                {"teacher_id": teacher_id, "calc_order_type": calc_order_type},
+                {"teacher_id": teacher_id, "order_type": calc_order_type},
             )
             row = cursor.one_or_none()
         if row is None:
             return 0.0, 0.0, None
-        return row[0], row[1], row[2]
+        return float(row[0]), float(row[1]), float(row[2]) if row[2] is not None else None
 
     async def select_teacher_bad_count(self, teacher_id: int) -> int:
         async with self._engine.connect() as conn:

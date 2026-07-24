@@ -117,7 +117,7 @@ class OperationService:
         else:
             has_accident = False
             client_score = None
-        fail_rate, complain_rate, prod_score = await self._daobi_database.select_teacher_prod_stats(
+        fail_rate, complain_rate, prod_score = await self._daobi_database.select_teacher_prod_stats_v2(
             teacher_id, order.order_type
         )
         bad_count = await self._daobi_database.select_teacher_bad_count(teacher_id)
