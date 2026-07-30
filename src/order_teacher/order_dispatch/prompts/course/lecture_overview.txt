@@ -1,9 +1,7 @@
 ### Background
 
 You are arranging some materials of a university course.
-Names of the materials are listed as inputs, with their ids. The name is either a file name, or a path-like string showing the folders containing the file as well as its name, which means the file is extracted from an archive.
-There may be duplicates in the materials. In this case, choose only one representative.
-
+The name of a material is either a file name, or a path-like string showing the containing folders and its file name, which means the file is extracted from an archive.
 ### Instructions
 
 Make a summary of the input course material, which is likely to be a module guide, a lecture, or the student's work of his writing assessment or dissertation.

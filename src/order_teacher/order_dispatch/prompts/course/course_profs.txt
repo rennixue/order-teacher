@@ -6,6 +6,7 @@ You are an academic tutor. You have made a summary of a course from its lecture 
 
 Select which major ids that the course belongs to or closely related to. At least 1, at most 3 major ids can be selected.
 If it is clear that the course belongs to which major, just one single major id should be selected.
+If your want to choose a major that is not which this course belongs to but is just related to, only when the course is indeed closely related to that major, then you can choose the major.
 If the course is interdisciplinary, usually multiple major ids should be selected.
 
 ### Output Format

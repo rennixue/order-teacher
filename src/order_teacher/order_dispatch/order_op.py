@@ -230,6 +230,12 @@ class OrderOperation:
         downloaded = await download_and_extract_coursewares(self._base_dir, remote_records)
         names = await self._agent.picked_coursewares([it.name for it in downloaded])
         picked = [next(it for it in downloaded if it.name == name) for name in names]
+        if len(picked) < 3 and len(downloaded) >= 3:
+            for courseware in downloaded[:10]:
+                if not any(it.name == courseware.name for it in picked):
+                    picked.append(courseware)
+        if len(picked) == 0:
+            picked = downloaded[:20]
         contents = await self._parse.parse_many([it.path for it in picked])
         parsed = [it.with_content(content) for it, content in zip(picked, contents) if content]
         summaries = await asyncio.gather(*[self._agent.lecture_overview(it.name, it.content) for it in parsed])
