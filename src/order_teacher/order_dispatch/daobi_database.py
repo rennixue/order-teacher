@@ -443,3 +443,24 @@ class DaobiDatabase:
             )
             order_ids = cursor.scalars().all()
         return list(order_ids)
+
+    async def fetch_teacher_ids_after(self, when: datetime) -> list[int]:
+        async with self._engine.connect() as conn:
+            cursor = await conn.execute(
+                sqlalchemy.text(
+                    dedent("""
+                        SELECT DISTINCT tu.id
+                        FROM teac_user tu
+                        JOIN teac_education te ON te.teac_id = tu.id
+                        JOIN teac_education_professional tep ON tep.education_id = te.id
+                        WHERE tu.statused IN (0, 2)
+                        AND tep.pro_id IN (2,4,7,8,11,12,15,17,18,20,24,25,26,33,36,38,39,42,43,45,46,47,48,49,50,51,53,55,59,60,62,63,67,69,86,87,89,91,92,93,95,96,97,99,100,101,102,103,106,107,121,122)
+                        AND tu.create_at >= :when
+                        ORDER BY tu.id DESC
+                        LIMIT 200
+                    """)
+                ),
+                {"when": when.isoformat(timespec="seconds")},
+            )
+            teacher_ids = cursor.scalars().all()
+        return list(teacher_ids)
