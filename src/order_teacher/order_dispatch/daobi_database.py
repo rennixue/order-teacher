@@ -233,7 +233,7 @@ class DaobiDatabase:
                         FROM stud_courseware w
                         WHERE w.delete_flag = 0 AND w.is_hide = 0
                         AND w.cd_id = :course_id
-                        AND w.group_id IN (5, 6, 21, 24, 26)
+                        AND w.group_id IN (5, 6, 7, 9, 21, 22, 23, 24, 26)
                         AND w.name RLIKE '.zip$|.rar$|.pdf$|.docx$|.doc$|.pptx$|.ppt$'
                         AND w.url <> ''
                         ORDER BY w.id
