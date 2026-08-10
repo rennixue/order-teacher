@@ -162,7 +162,7 @@ async def get_job_result(request: Request[AppState]) -> AppJSONResponse:
     matches = [
         TeacherMatch.model_validate(it, from_attributes=True)
         for it in job.matches
-        if it.tier < 2 or (it.tier < 10 and it.prof_score >= 0.15)
+        if it.tier < 2 or (it.tier < 10 and it.prof_score >= 0.12)
     ]
     matches = sorted(matches, key=lambda it: it.no)
     for no, it in enumerate(matches, 1):
