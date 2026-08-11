@@ -146,7 +146,9 @@ class MainOperation:
             data = await self._teacher_op.refresh_unstable(teacher_id, old_data)
             if data is None:
                 return ProcessTeacherUnstableResult(ok=False, err=BaseError(msg="nothing or too few to refresh"))
-            await self._database.insert_teacher_unstable(teacher_id, data.model_dump_json(), data.major_ids)
+            await self._database.insert_teacher_unstable(
+                teacher_id, data.model_dump_json(), data.major_ids, old_record.feedback
+            )
         except Exception as exc:
             logger.error("fail to refresh_teacher_unstable %s: %r", teacher_id, exc)
             # do not insert err to database

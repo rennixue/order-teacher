@@ -4,7 +4,7 @@ from datetime import datetime
 from sqlalchemy.dialects.mysql.types import DATETIME, INTEGER, MEDIUMTEXT, TEXT, TINYINT, VARCHAR
 from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy.sql import delete, func, select, text, update
+from sqlalchemy.sql import func, select, text, update
 from sqlalchemy.sql.schema import UniqueConstraint
 
 
@@ -127,12 +127,22 @@ class Database:
     ) -> None:
         async with self._session_factory() as session:
             session.add(TeacherStableRecord(teacher_id=teacher_id, data=data))
-            await session.execute(
-                delete(TeacherMajorRecord)
-                .where(TeacherMajorRecord.teacher_id == teacher_id)
-                .where(TeacherMajorRecord.kind.in_([1, 2]))
-                .where(TeacherMajorRecord.inactive == 0)
-            )
+            existing_edu_major_ids = (
+                await session.scalars(
+                    select(TeacherMajorRecord.major_id)
+                    .where(TeacherMajorRecord.teacher_id == teacher_id)
+                    .where(TeacherMajorRecord.kind == 1)
+                    .where(TeacherMajorRecord.inactive == 0)
+                )
+            ).all()
+            existing_major_ids = (
+                await session.scalars(
+                    select(TeacherMajorRecord.major_id)
+                    .where(TeacherMajorRecord.teacher_id == teacher_id)
+                    .where(TeacherMajorRecord.kind == 2)
+                    .where(TeacherMajorRecord.inactive == 0)
+                )
+            ).all()
             excl_major_ids = (
                 await session.scalars(
                     select(TeacherMajorRecord.major_id)
@@ -144,14 +154,14 @@ class Database:
                 [
                     TeacherMajorRecord(teacher_id=teacher_id, major_id=it, kind=1)
                     for it in edu_major_ids
-                    if it not in excl_major_ids
+                    if it not in excl_major_ids and it not in existing_edu_major_ids
                 ]
             )
             session.add_all(
                 [
                     TeacherMajorRecord(teacher_id=teacher_id, major_id=it, kind=2)
                     for it in major_ids
-                    if it not in excl_major_ids
+                    if it not in excl_major_ids and it not in existing_major_ids
                 ]
             )
             await session.commit()
@@ -171,15 +181,19 @@ class Database:
             )
         return r is not None
 
-    async def insert_teacher_unstable(self, teacher_id: int, data: str, major_ids: Sequence[int]) -> None:
+    async def insert_teacher_unstable(
+        self, teacher_id: int, data: str, major_ids: Sequence[int], feedback: str | None = None
+    ) -> None:
         async with self._session_factory() as session:
-            session.add(TeacherUnstableRecord(teacher_id=teacher_id, data=data))
-            await session.execute(
-                delete(TeacherMajorRecord)
-                .where(TeacherMajorRecord.teacher_id == teacher_id)
-                .where(TeacherMajorRecord.kind == 3)
-                .where(TeacherMajorRecord.inactive == 0)
-            )
+            session.add(TeacherUnstableRecord(teacher_id=teacher_id, data=data, feedback=feedback))
+            existing_major_ids = (
+                await session.scalars(
+                    select(TeacherMajorRecord.major_id)
+                    .where(TeacherMajorRecord.teacher_id == teacher_id)
+                    .where(TeacherMajorRecord.kind == 3)
+                    .where(TeacherMajorRecord.inactive == 0)
+                )
+            ).all()
             excl_major_ids = (
                 await session.scalars(
                     select(TeacherMajorRecord.major_id)
@@ -191,7 +205,7 @@ class Database:
                 [
                     TeacherMajorRecord(teacher_id=teacher_id, major_id=it, kind=3)
                     for it in major_ids
-                    if it not in excl_major_ids
+                    if it not in excl_major_ids and it not in existing_major_ids
                 ]
             )
             await session.commit()
@@ -318,9 +332,18 @@ class Database:
         if not text:
             return
         async with self._session_factory() as session:
+            maybe_row_id = await session.scalar(
+                select(TeacherUnstableRecord.id)
+                .where(TeacherUnstableRecord.teacher_id == teacher_id)
+                .where(TeacherUnstableRecord.data.is_not(None))
+                .order_by(TeacherUnstableRecord.created_at.desc())
+                .limit(1)
+            )
+            if maybe_row_id is None:
+                return
             await session.execute(
                 update(TeacherUnstableRecord)
-                .where(TeacherUnstableRecord.teacher_id == teacher_id)
+                .where(TeacherUnstableRecord.id == maybe_row_id)
                 .values(feedback=func.concat(func.coalesce(TeacherUnstableRecord.feedback, ""), text + "\n"))
             )
             await session.commit()

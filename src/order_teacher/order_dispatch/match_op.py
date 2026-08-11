@@ -149,13 +149,15 @@ class MatchOperation:
             return [(it[0], 1.0) for it in teacher_datas]
         teacher_summary_pairs: list[tuple[int, str, str]] = []
         for teacher_id, stable, unstable, feedback in teacher_datas:
-            intro, summary = "", ""
+            intro, subject, summary = "", "", ""
             if stable:
                 if maybe_str := stable.raw_info.intro:
                     intro = maybe_str.replace("\n", "").strip()
+                if maybe_list := stable.profile.subject_areas:
+                    subject = "This teacher is good at: " + ", ".join(maybe_list)
             if unstable:
                 summary = unstable.summary.strip()
-            teacher_summary = intro + " " + summary
+            teacher_summary = intro + " " + subject + " " + summary
             if not teacher_summary:
                 continue
             teacher_summary_pairs.append((teacher_id, teacher_summary, feedback or ""))
