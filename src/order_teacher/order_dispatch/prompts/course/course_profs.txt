@@ -9,6 +9,10 @@ If it is clear that the course belongs to which major, just one single major id 
 If your want to choose a major that is not which this course belongs to but is just related to, only when the course is indeed very closely related to that major, then you can choose the major.
 If the course is interdisciplinary, usually multiple major ids should be selected.
 
+### Additional Notes
+
+If it is explicitly stated that the course is offered by Major A by the materials, but it is also clear that its content or knowledge scope belongs to Major B, then either both majors or only Major B should be chosen, especially for a foundational course of math or natural science. For example, for course Calculus for Economics offered by School of Economics you should choose both majors "Economics (经济学)" and "Mathematics (数学)", and for course Thermodynamics offered by Department of Engineering you should only choose the major "Physics (物理学)".
+
 ### Output Format
 
 Output the selected major ids in the format of the following json object. Do not make any explanation.
