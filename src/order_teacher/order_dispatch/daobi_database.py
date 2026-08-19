@@ -397,6 +397,7 @@ class DaobiDatabase:
                         FROM teac_order `to`
                         WHERE `to`.user_id = :teacher_id
                         AND `to`.statused IN (16)
+                        AND `to`.course_id >= 200000
                         ORDER BY `to`.course_id DESC
                         LIMIT :limit
                     """)

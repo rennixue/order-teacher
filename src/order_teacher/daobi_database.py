@@ -333,7 +333,15 @@ LIMIT 1
             row = cursor.one_or_none()
         if row is None:
             return 0.0, 0.0, None
-        return float(row[0]), float(row[1]), float(row[2]) if row[2] is not None else None
+        if row[2] is None:
+            avg_score = None
+        else:
+            row_2_float = float(row[2])
+            if row_2_float == 0.0 or row_2_float < 1e-3:
+                avg_score = None
+            else:
+                avg_score = row_2_float
+        return float(row[0]), float(row[1]), avg_score
 
     async def select_teacher_bad_count(self, teacher_id: int) -> int:
         async with self._engine.connect() as conn:

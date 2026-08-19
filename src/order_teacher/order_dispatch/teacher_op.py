@@ -250,10 +250,15 @@ class TeacherOperation:
         if not order_datas:
             logger.warning("teacher %s has no useful orders to refresh", teacher_id)
             return None
-        if len(order_datas) < 5:
-            logger.warning("teacher %s has too few orders to refresh", teacher_id)
-            return None
         if old.summary:
+            # fmt: off
+            if (
+                (len(old.processed_order_ids) >= 10 and len(order_datas) < 4)
+                or (len(old.processed_order_ids) >= 5 and len(order_datas) < 2)
+            ):
+            # fmt: on
+                logger.warning("teacher %s has too few orders to refresh", teacher_id)
+                return None
             summary = await self._agent.volatile_overview_refresh([it.summary for it in order_datas], old.summary)
         else:
             summary = await self._agent.volatile_overview([it.summary for it in order_datas])
