@@ -41,13 +41,27 @@ async def download_coursewares(
             if path.exists():
                 yield record, path
                 continue
+            max_size = 100_000_000
+            chunk_size = 65536
+            total = 0
             try:
                 async with client.stream("GET", record.url) as stream:
+                    try:
+                        if (content_length := int(stream.headers.get("Content-Length"))) and content_length >= max_size:
+                            raise FileTooLarge()
+                    except Exception:
+                        pass
                     with open(path, "wb") as fp:
-                        async for chunk in stream.aiter_bytes(65536):
+                        async for chunk in stream.aiter_bytes(chunk_size):
+                            total += chunk_size
+                            if total >= max_size:
+                                raise FileTooLarge()
                             fp.write(chunk)
             except httpx.HTTPError as exc:
                 logger.error("fail to download %d: %r", record.courseware_id, exc)
+                continue
+            except FileTooLarge:
+                logger.warning("abort download %d: file too large", record.courseware_id)
                 continue
             yield record, path
 

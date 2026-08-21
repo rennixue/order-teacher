@@ -55,7 +55,8 @@ class TeacherMajorRecord(Base):
     major_id: Mapped[int] = mapped_column(INTEGER, index=True)
     kind: Mapped[int] = mapped_column(TINYINT)
     created_at: Mapped[datetime] = mapped_column(DATETIME, server_default=text("CURRENT_TIMESTAMP"))
-    inactive: Mapped[int] = mapped_column(TINYINT(1), default=0, index=True)
+    inactive: Mapped[int] = mapped_column(TINYINT(1), default=0)
+    stale: Mapped[int] = mapped_column(TINYINT(1), default=0)
 
 
 class CourseRecord(Base):
@@ -224,6 +225,7 @@ class Database:
             .where(TeacherMajorRecord.major_id.in_(major_ids))
             .where(TeacherMajorRecord.kind.in_(kinds))
             .where(TeacherMajorRecord.inactive == 0)
+            .where(TeacherMajorRecord.stale == 0)
         )
         if excl_teacher_ids:
             stmt = stmt.where(TeacherMajorRecord.teacher_id.not_in(excl_teacher_ids))
@@ -345,5 +347,23 @@ class Database:
                 update(TeacherUnstableRecord)
                 .where(TeacherUnstableRecord.id == maybe_row_id)
                 .values(feedback=func.concat(func.coalesce(TeacherUnstableRecord.feedback, ""), text + "\n"))
+            )
+            await session.commit()
+
+    async def select_all_teacher_ids(self) -> list[int]:
+        async with self._session_factory() as session:
+            cursor = await session.stream_scalars(
+                select(TeacherMajorRecord.teacher_id)
+                .distinct()
+                .where(TeacherMajorRecord.stale == 0)
+                .order_by(TeacherMajorRecord.teacher_id)
+            )
+            teacher_ids = await cursor.yield_per(1000).all()
+        return list(teacher_ids)
+
+    async def update_teachers_stale(self, teacher_ids: Sequence[int]) -> None:
+        async with self._session_factory() as session:
+            await session.execute(
+                update(TeacherMajorRecord).where(TeacherMajorRecord.teacher_id.in_(teacher_ids)).values(stale=1)
             )
             await session.commit()

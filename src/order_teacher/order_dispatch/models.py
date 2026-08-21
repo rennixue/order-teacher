@@ -564,3 +564,7 @@ class CourseProfessionRecord(BaseModel):
     created_at: datetime
     order_name: str
     course_name: str
+
+
+class FileTooLarge(RuntimeError):
+    pass

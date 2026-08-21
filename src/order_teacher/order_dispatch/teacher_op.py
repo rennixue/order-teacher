@@ -38,13 +38,21 @@ async def download_teacher_files(
             if path.exists():
                 yield record, path
                 continue
+            chunk_size = 65536
+            total = 0
             try:
                 async with client.stream("GET", record.url) as stream:
                     with open(path, "wb") as fp:
-                        async for chunk in stream.aiter_bytes(65536):
+                        async for chunk in stream.aiter_bytes(chunk_size):
+                            total += chunk_size
+                            if total >= 10_000_000:
+                                raise FileTooLarge()
                             fp.write(chunk)
             except httpx.HTTPError as exc:
                 logger.error("fail to download %d: %r", record.teacher_file_id, exc)
+                continue
+            except FileTooLarge:
+                logger.warning("abort download %d: file too large", record.teacher_file_id)
                 continue
             yield record, path
 
