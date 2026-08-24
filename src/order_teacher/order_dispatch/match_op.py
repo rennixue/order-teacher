@@ -54,6 +54,10 @@ class MatchOperation:
     ) -> MatchOrderData:
         if order_data.major_ids:
             major_ids = order_data.major_ids
+            orig_prof_id = order_data.raw_info.prof_id
+            if orig_prof_id is not None:
+                if orig_prof_id not in major_ids:
+                    major_ids.append(orig_prof_id)
         else:
             orig_prof_id = order_data.raw_info.prof_id
             if orig_prof_id is None:
