@@ -1,4 +1,6 @@
 import logging
+from collections.abc import Sequence
+from datetime import datetime
 from typing import Literal
 
 from sqlalchemy import text
@@ -364,3 +366,18 @@ LIMIT 1
         if scalar is None:
             return 0
         return scalar
+
+    async def select_idle_teacher_ids_after(self, teacher_ids: Sequence[int], when: datetime) -> list[int]:
+        async with self._engine.connect() as conn:
+            cursor = await conn.execute(
+                text("""
+                    SELECT DISTINCT teacher_id
+                    FROM stud_course
+                    WHERE create_at >= :when
+                    AND teacher_id IN :teacher_ids
+                    LIMIT 1000
+                """).bindparams(teacher_ids=tuple(teacher_ids)),
+                {"when": when},
+            )
+            busy = set(cursor.scalars().all())
+        return [it for it in teacher_ids if it not in busy]

@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import assert_never
 
@@ -176,9 +177,20 @@ class OperationService:
             assert_never(order.parent_type)
 
     async def supplement_teachers(self, mut_triples: list[tuple[int, float, int]], order: OrderTagging) -> None:
+        idle_teacher_ids: list[int] = []
+        if possible_teacher_ids := [*order.t_assign, *order.t_same_code]:
+            try:
+                idle_teacher_ids = await self._daobi_database.select_idle_teacher_ids_after(
+                    possible_teacher_ids, datetime.now() - timedelta(days=180)
+                )
+            except Exception:
+                pass
         for teacher_id in order.t_assign:
             if not any(it[0] == teacher_id for it in mut_triples):
-                mut_triples.append((teacher_id, 0.0, 0))
+                if teacher_id not in idle_teacher_ids:
+                    mut_triples.append((teacher_id, 0.0, 0))
+                else:
+                    mut_triples.append((teacher_id, 0.0, 13))
         for teacher_id in order.t_unassign:
             if not any(it[0] == teacher_id for it in mut_triples):
                 mut_triples.append((teacher_id, 0.0, 11))
@@ -192,8 +204,8 @@ class OperationService:
         except Exception:
             same_code_forbid_teacher_ids = []
         for teacher_id in same_code_teacher_ids:
-            if teacher_id not in same_code_forbid_teacher_ids:
-                if not any(it[0] == teacher_id for it in mut_triples):
+            if not any(it[0] == teacher_id for it in mut_triples):
+                if teacher_id not in same_code_forbid_teacher_ids:
                     if student_id := order.student_id:
                         try:
                             has_accident = await self._daobi_database.select_teacher_student_accident(
@@ -202,7 +214,17 @@ class OperationService:
                         except Exception:
                             has_accident = True
                         if has_accident is False:
-                            mut_triples.append((teacher_id, 0.0, 1))
+                            if teacher_id not in idle_teacher_ids:
+                                tier = 1
+                            else:
+                                tier = 13
+                        else:
+                            tier = 14
+                    else:
+                        tier = 14
+                else:
+                    tier = 12
+                mut_triples.append((teacher_id, 0.0, tier))
 
     async def add_feedback(self, order_id: int, teacher_id: int, choice: int | None, message: str) -> None:
         message = message.strip()
