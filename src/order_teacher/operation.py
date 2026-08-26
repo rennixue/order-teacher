@@ -187,10 +187,7 @@ class OperationService:
                 pass
         for teacher_id in order.t_assign:
             if not any(it[0] == teacher_id for it in mut_triples):
-                if teacher_id not in idle_teacher_ids:
-                    mut_triples.append((teacher_id, 0.0, 0))
-                else:
-                    mut_triples.append((teacher_id, 0.0, 13))
+                mut_triples.append((teacher_id, 0.0, 0))
         for teacher_id in order.t_unassign:
             if not any(it[0] == teacher_id for it in mut_triples):
                 mut_triples.append((teacher_id, 0.0, 11))
