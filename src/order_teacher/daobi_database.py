@@ -6,7 +6,7 @@ from typing import Literal
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 
-from .models import *  # noqa: F403
+from .models import *
 
 logger = logging.getLogger(__name__)
 
@@ -123,7 +123,7 @@ class DaobiDatabaseService:
                     LEFT JOIN teac_product tp_one ON tp_one.teac_id = tu.id AND tp_one.type = :prod_type AND tp_one.deleteed = 0
                     WHERE tu.id IN :teacher_ids
                     AND (
-                      tu.statused IN (1, 4, 5)
+                      tu.statused == 1
                       OR (tp_all.statused IN (2, 3) OR tp_one.statused IN (2, 3))
                     )
                     LIMIT 200
