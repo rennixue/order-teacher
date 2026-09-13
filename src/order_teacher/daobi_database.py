@@ -123,7 +123,7 @@ class DaobiDatabaseService:
                     LEFT JOIN teac_product tp_one ON tp_one.teac_id = tu.id AND tp_one.type = :prod_type AND tp_one.deleteed = 0
                     WHERE tu.id IN :teacher_ids
                     AND (
-                      tu.statused == 1
+                      tu.statused = 1
                       OR (tp_all.statused IN (2, 3) OR tp_one.statused IN (2, 3))
                     )
                     LIMIT 200
