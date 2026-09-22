@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any
 
 import jinja2
-import jinja2.meta  # type:ignore  # noqa
+import jinja2.meta  # type: ignore
 
 
 class TemplateError(Exception):

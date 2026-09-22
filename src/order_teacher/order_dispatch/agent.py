@@ -3,9 +3,9 @@ import functools
 import logging
 import random
 from asyncio import Semaphore
-from collections.abc import Sequence
+from collections.abc import Awaitable, Callable, Sequence
 from pathlib import Path
-from typing import Any, Awaitable, Callable, ParamSpec, TypeVar, cast
+from typing import Any, ParamSpec, TypeVar, cast
 
 from openai import AsyncOpenAI, AsyncStream, RateLimitError
 from openai.types.chat import ChatCompletion, ChatCompletionChunk
@@ -13,7 +13,7 @@ from tenacity import retry, stop_after_attempt
 
 from .answer import OpenAIAnswer, ThreeStringIO
 from .constants import ProfessionDict
-from .models import *  # noqa: F403
+from .models import *
 from .template import JinjaTemplateManager
 
 logger = logging.getLogger(__name__)
@@ -91,7 +91,7 @@ class BaseAgent:
                     logger.warning("rate limited %r", exc)
                     attempt += 1
                     if attempt == 2:
-                        raise exc
+                        raise
                     await asyncio.sleep(10 * 2**attempt + random.random())
                     continue
                 if stream:

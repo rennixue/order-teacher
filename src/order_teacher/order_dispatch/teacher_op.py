@@ -11,7 +11,7 @@ from .agent import Agent
 from .constants import PROFESSIONS
 from .daobi_database import DaobiDatabase
 from .database import Database
-from .models import *  # noqa: F403
+from .models import *
 from .order_op import OrderOperation, extract_rar, extract_zip
 from .parse import IParse
 
@@ -42,7 +42,7 @@ async def download_teacher_files(
             total = 0
             try:
                 async with client.stream("GET", record.url) as stream:
-                    with open(path, "wb") as fp:
+                    with open(path, "wb") as fp:  # noqa: ASYNC230
                         async for chunk in stream.aiter_bytes(chunk_size):
                             total += chunk_size
                             if total >= 10_000_000:
@@ -61,7 +61,7 @@ def path_is_doc(path: Path) -> bool:
     ext = path.suffix.removeprefix(".")
     if ext not in ("pdf", "docx", "doc", "pptx", "ppt", "png", "jpg", "jpeg", "webp"):
         return False
-    if ext.startswith(".") or ext.startswith("~") or ext.startswith("$"):
+    if ext.startswith((".", "~", "$")):
         return False
     return True
 
@@ -222,10 +222,10 @@ class TeacherOperation:
         )
 
     async def refresh_unstable(
-        self, teacher_id: int, old: ProcessTeacherUnstableData
+        self, teacher_id: int, old: ProcessTeacherUnstableData, min_course_id: int
     ) -> ProcessTeacherUnstableData | None:
         try:
-            order_ids = await self._daobi_database.fetch_teacher_courses(teacher_id, 20)
+            order_ids = await self._daobi_database.fetch_teacher_courses(teacher_id, 20, min_course_id)
         except Exception as exc:
             logger.error("daobi fetch_teacher_courses fail teacher %s: %r", teacher_id, exc)
             raise OperationError("fail to fetch teacher courses")

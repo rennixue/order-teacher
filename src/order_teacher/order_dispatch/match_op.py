@@ -8,7 +8,7 @@ from pydantic import ValidationError
 from .agent import Agent
 from .daobi_database import DaobiDatabase
 from .database import Database
-from .models import *  # noqa: F403
+from .models import *
 from .utils import split_paragraphs
 
 if TYPE_CHECKING:
@@ -206,7 +206,7 @@ class MatchOperation:
         message = message.strip()
         if message == "1" or message == "3":
             return
-        if message.startswith("1") or message.endswith("1") or message.startswith("3") or message.endswith("3"):
+        if message.startswith("1") or message.endswith("1") or message.startswith("3") or message.endswith("3"):  # noqa: PIE810
             return
         if not (message == "2" or await self._agent.cannot_teach(message)):
             return

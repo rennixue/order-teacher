@@ -6,7 +6,7 @@ from textwrap import dedent
 import sqlalchemy
 from sqlalchemy.ext.asyncio import create_async_engine
 
-from .models import *  # noqa: F403
+from .models import *
 
 logger = logging.getLogger(__name__)
 
@@ -388,7 +388,7 @@ class DaobiDatabase:
             rows = cursor.all()
         return [TeacherStatistic.model_validate(row, from_attributes=True) for row in rows]
 
-    async def fetch_teacher_courses(self, teacher_id: int, num: int) -> list[int]:
+    async def fetch_teacher_courses(self, teacher_id: int, num: int, min_course_id: int = 200000) -> list[int]:
         async with self._engine.connect() as conn:
             cursor = await conn.execute(
                 sqlalchemy.text(
@@ -397,12 +397,12 @@ class DaobiDatabase:
                         FROM teac_order `to`
                         WHERE `to`.user_id = :teacher_id
                         AND `to`.statused IN (16)
-                        AND `to`.course_id >= 200000
+                        AND `to`.course_id >= :min_course_id
                         ORDER BY `to`.course_id DESC
                         LIMIT :limit
                     """)
                 ),
-                {"teacher_id": teacher_id, "limit": num},
+                {"teacher_id": teacher_id, "limit": num, "min_course_id": min_course_id},
             )
             course_ids = cursor.scalars().all()
         return list(course_ids)

@@ -513,7 +513,7 @@ class TeacherStatistic(BaseModel):
     @field_validator("high_rate", "fail_rate", "complaint_rate", "avg_score", "experience", mode="before")
     @classmethod
     def validate_float(cls, v: object) -> object:
-        if isinstance(v, float) or isinstance(v, int):
+        if isinstance(v, (float, int)):
             return v
         if v is None:
             return 0.0

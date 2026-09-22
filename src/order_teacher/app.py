@@ -16,7 +16,7 @@ from starlette.routing import Route
 from .constants import JOB_STATUSES, ORDER_TYPES
 from .daobi_database import DaobiDatabaseService
 from .database import DatabaseService
-from .models import *  # noqa: F403
+from .models import *
 from .operation import OperationService
 
 logger = logging.getLogger(__name__)

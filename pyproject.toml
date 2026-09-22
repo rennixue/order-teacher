@@ -33,7 +33,21 @@ build-backend = "uv_build"
 line-length = 120
 
 [tool.ruff.lint]
-ignore = ["F405"]
+ignore = [
+    "BLE001",
+    "C408",
+    "DTZ",
+    "F405",
+    "PIE807",
+    "S110",
+    "S112",
+    "SIM102",
+    "SIM103",
+    "SIM118",
+    "UP032",
+    "UP046",
+    "UP047",
+]
 
 [tool.pyright]
 typeCheckingMode = "strict"

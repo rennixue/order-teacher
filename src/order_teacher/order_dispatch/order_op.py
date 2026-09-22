@@ -3,9 +3,9 @@ import logging
 import os
 import os.path
 import shutil
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Iterable, Iterator
 from pathlib import Path
-from typing import Iterable, Iterator, cast
+from typing import cast
 from zipfile import ZipFile
 
 import chardet
@@ -15,7 +15,7 @@ from rarfile import RarFile
 from .agent import Agent
 from .constants import PROFESSIONS
 from .daobi_database import DaobiDatabase
-from .models import *  # noqa: F403
+from .models import *
 from .parse import IParse
 
 logger = logging.getLogger(__name__)
@@ -51,7 +51,7 @@ async def download_coursewares(
                             raise FileTooLarge()
                     except Exception:
                         pass
-                    with open(path, "wb") as fp:
+                    with open(path, "wb") as fp:  # noqa: ASYNC230
                         async for chunk in stream.aiter_bytes(chunk_size):
                             total += chunk_size
                             if total >= max_size:
@@ -70,7 +70,7 @@ def path_is_doc(path: Path) -> bool:
     ext = path.suffix.removeprefix(".")
     if ext not in ("pdf", "docx", "doc", "pptx", "ppt"):
         return False
-    if ext.startswith(".") or ext.startswith("~") or ext.startswith("$"):
+    if ext.startswith((".", "~", "$")):
         return False
     return True
 

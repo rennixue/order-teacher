@@ -4,7 +4,7 @@ from pydantic import ValidationError
 
 from .database import Database
 from .match_op import MatchOperation
-from .models import *  # noqa: F403
+from .models import *
 from .order_op import OrderOperation
 from .teacher_op import TeacherOperation
 
@@ -130,7 +130,7 @@ class MainOperation:
             logger.info("process_teacher_unstable %s ok", teacher_id)
             return ProcessTeacherUnstableResult(ok=True, data=data)
 
-    async def refresh_teacher_unstable(self, teacher_id: int) -> ProcessTeacherUnstableResult:
+    async def refresh_teacher_unstable(self, teacher_id: int, min_course_id: int) -> ProcessTeacherUnstableResult:
         try:
             old_record = await self._database.get_latest_teacher_unstable(teacher_id)
             if old_record is None:
@@ -143,7 +143,7 @@ class MainOperation:
                 except ValidationError as exc:
                     logger.error("fail to validate ProcessTeacherUnstableData from database: %r", exc)
                     old_data = ProcessTeacherUnstableData.fallback(teacher_id)
-            data = await self._teacher_op.refresh_unstable(teacher_id, old_data)
+            data = await self._teacher_op.refresh_unstable(teacher_id, old_data, min_course_id)
             if data is None:
                 return ProcessTeacherUnstableResult(ok=False, err=BaseError(msg="nothing or too few to refresh"))
             await self._database.insert_teacher_unstable(
