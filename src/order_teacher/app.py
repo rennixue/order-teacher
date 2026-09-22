@@ -13,6 +13,8 @@ from starlette.requests import Request
 from starlette.responses import HTMLResponse, JSONResponse
 from starlette.routing import Route
 
+from .background import MyBackgroundTasks
+from .cache import SimpleCache
 from .constants import JOB_STATUSES, ORDER_TYPES
 from .daobi_database import DaobiDatabaseService
 from .database import DatabaseService
@@ -41,6 +43,8 @@ class AppJSONResponse(JSONResponse):
 
 
 class AppState(TypedDict):
+    background: MyBackgroundTasks
+    cache: SimpleCache[str, Any]
     daobi_database: DaobiDatabaseService
     database: DatabaseService
     operation: OperationService
@@ -60,6 +64,8 @@ async def lifespan(app: Starlette) -> AsyncGenerator[AppState]:
         volcengine_models=settings.volcengine_models,
     )
     state: AppState = {
+        "background": MyBackgroundTasks(timeout=120),
+        "cache": SimpleCache(),
         "daobi_database": daobi_database,
         "database": database,
         "operation": operation,
@@ -139,7 +145,9 @@ async def post_job(request: Request[AppState]) -> AppJSONResponse:
         await request.state["database"].mark_job_fail(job_id, err_msg)
         resp_body = PostJobRespBody(job_id=job_id, status="fail", order_id=order_id, err_msg=err_msg)
         return AppJSONResponse(resp_body, status_code=400)
-    asyncio.create_task(process_job(request.state["database"], job_id, request.state["operation"], order_id))
+    request.state["background"].create_task(
+        process_job, request.state["database"], job_id, request.state["operation"], order_id
+    )
     resp_body = PostJobRespBody(job_id=job_id, status="pend", order_id=order_id, err_msg=None)
     return AppJSONResponse(resp_body, status_code=202)
 
@@ -147,6 +155,10 @@ async def post_job(request: Request[AppState]) -> AppJSONResponse:
 async def get_job_status(request: Request[AppState]) -> AppJSONResponse:
     job_id = extract_job_id(request)
     job = await request.state["database"].get_job(job_id)
+    # job = request.state["cache"].get(f"get_job_status.{job_id}")
+    # if job is None:
+    #     job = await request.state["database"].get_job(job_id)
+    #     request.state["cache"].set(f"get_job_status.{job_id}", job, 20.0)
     if job is None:
         raise HTTPException(404, "job_id does not exist")
     status = JOB_STATUSES[job.status]
