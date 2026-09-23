@@ -37,6 +37,7 @@ class MatchRecord(Base):
     teacher_id: Mapped[int] = mapped_column(INTEGER)
     tier: Mapped[int] = mapped_column(TINYINT)
     prof_score: Mapped[float] = mapped_column(FLOAT)
+    reason: Mapped[str] = mapped_column(TEXT)
     job: Mapped["JobRecord"] = relationship(back_populates="matches")
 
 

@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Sequence
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import assert_never
@@ -78,8 +79,11 @@ class OperationService:
         await self.supplement_teachers(triples, order_tagging)
 
         triples.sort(key=lambda it: (it[2], -it[1]))
+        reasons: list[str] = await self.make_reasons(order_id, triples)
+        assert len(triples) == len(reasons)
         matches: list[TeacherMatch] = [
-            TeacherMatch(no=i, teacher_id=it[0], prof_score=it[1], tier=it[2]) for i, it in enumerate(triples, 1)
+            TeacherMatch(no=i, teacher_id=it[0], prof_score=it[1], tier=it[2], reason=reason)
+            for i, (it, reason) in enumerate(zip(triples, reasons), 1)
         ]
         return matches
 
@@ -231,3 +235,25 @@ class OperationService:
             await self._main_op.refresh_teacher_feedback(order_id, teacher_id, message)
         except Exception as exc:
             logger.error("fail to refresh_teacher_feedback: %r", exc)
+
+    async def make_reasons(self, order_id: int, triples: Sequence[tuple[int, float, int]]) -> list[str]:
+        prefix_mapping = {
+            0: "您是订单指定的老师。",
+            1: "您接过相同课程代码的订单。",
+            2: "您接过相同客户的订单。",
+        }
+        fallback_reason = "您的专业与订单相符。"
+        teacher_ids = [it[0] for it in triples if it[2] in (0, 1, 2, 3, 4)]
+        try:
+            prof_reasons = await self._main_op.make_reasons(order_id, teacher_ids)
+        except Exception as exc:
+            logger.error("fail to make_reasons: %r", exc)
+            prof_reasons = ["" for _ in range(len(triples))]
+        assert len(teacher_ids) == len(prof_reasons)
+        reasons: list[str] = []
+        for (_, _, tier), prof_reason in zip(triples, prof_reasons):
+            prefix = prefix_mapping.get(tier, "")
+            reasons.append(prefix + prof_reason if prefix or prof_reason else fallback_reason)
+        for _ in range(len(triples) - len(teacher_ids)):
+            reasons.append("")
+        return reasons

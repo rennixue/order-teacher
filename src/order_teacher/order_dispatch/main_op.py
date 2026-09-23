@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Sequence
 
 from pydantic import ValidationError
 
@@ -216,3 +217,10 @@ class MainOperation:
             await self._match_op.refresh_feedback(order_id, teacher_id, message)
         except Exception as exc:
             logger.error("fail to refresh_feedback: %r", exc)
+
+    async def make_reasons(self, order_id: int, teacher_ids: Sequence[int]) -> list[str]:
+        try:
+            return await self._match_op.make_reasons(order_id, teacher_ids)
+        except Exception as exc:
+            logger.error("fail to make_reasons: %r", exc)
+            raise

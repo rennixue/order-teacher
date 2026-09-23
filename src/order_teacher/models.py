@@ -39,6 +39,7 @@ class TeacherMatch(BaseModel):
     teacher_id: int
     tier: int
     prof_score: float
+    reason: str
 
 
 class GetJobStatusRespBody(BaseModel):

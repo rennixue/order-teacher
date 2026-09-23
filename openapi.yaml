@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: 订单匹配讲师
-  version: v2607201534
+  version: v2607221747
 servers:
   - url: http://47.96.19.145:10809/api
 security: []
@@ -305,8 +305,12 @@ components:
         prof_score:
           type: number
           summary: 专业匹配性分数，与classbro上专业无关，0-1之间
+        reason:
+          type: string
+          summary: 匹配理由（算法认为实质上不太匹配的也会出理由）
       required:
         - no
         - teacher_id
         - tier
         - prof_score
+        - reason

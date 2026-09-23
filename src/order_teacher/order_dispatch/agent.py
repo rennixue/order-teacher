@@ -299,3 +299,40 @@ class Agent(BaseAgent):
         return output.startswith("yes")
 
     cannot_teach = with_fallback(_cannot_teach, lambda self, message: False)
+
+    @retry(reraise=True, stop=stop_after_attempt(2))
+    async def _make_reason(
+        self,
+        *,
+        course_name: str,
+        order_summary: str,
+        order_needs: str,
+        teacher_intro: str,
+        teacher_summary: str,
+        teacher_subjects: str,
+        teacher_skills: str,
+        teacher_transcripts: str,
+    ) -> str:
+        if not (course_name or order_summary):
+            return ""
+        if not (teacher_intro or teacher_summary or teacher_subjects or teacher_skills or teacher_transcripts):
+            return ""
+        user_msg = self._templates["match/make_reason"].render(
+            course_name=course_name,
+            order_summary=order_summary,
+            order_needs=order_needs,
+            teacher_intro=teacher_intro,
+            teacher_summary=teacher_summary,
+            teacher_subjects=teacher_subjects,
+            teacher_skills=teacher_skills,
+            teacher_transcripts=teacher_transcripts,
+        )
+        answer = await self._ask(user_msg, stream=False, max_completion_tokens=128)
+        return answer.nonempty_content.strip().replace("\n", " ")
+
+    make_reason = with_fallback(
+        _make_reason,
+        lambda self, course_name, order_summary, order_needs, teacher_intro, teacher_summary, teacher_subjects, teacher_skills, teacher_transcripts: (
+            ""
+        ),
+    )

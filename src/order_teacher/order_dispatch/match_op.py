@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import math
 from collections.abc import Sequence
@@ -228,3 +229,51 @@ class MatchOperation:
         else:
             return
         await self._database.update_teacher_feedback(teacher_id, text)
+
+    async def make_reasons(self, order_id: int, teacher_ids: Sequence[int]) -> list[str]:
+        if not teacher_ids:
+            return []
+        order_record = await self._database.get_latest_order(order_id)
+        assert order_record, "order should exist"
+        assert order_record.data, "order should succeed"
+        order_data = ProcessOrderData.model_validate_json(order_record.data)
+        order_needs = "\n".join((order_data.raw_info.needs or {}).values())
+        course_name = order_data.raw_info.course_name or ""
+        if order_data.summary:
+            order_summary = order_data.summary
+        else:
+            order_summary = ""
+            if (univ_id := order_data.raw_info.univ_id) and (course_code := order_data.raw_info.course_code):
+                try:
+                    course_record = await self._database.get_course(univ_id, course_code)
+                except Exception:
+                    logger.error("fail to get_course")
+                else:
+                    if course_record and course_record.summary:
+                        logger.info("use course summary")
+                        order_summary = course_record.summary
+        teacher_datas = [await self._get_teacher_data(it) for it in teacher_ids]
+        reasons = await asyncio.gather(
+            *[
+                self._agent.make_reason(
+                    course_name=course_name,
+                    order_summary=order_summary,
+                    order_needs=order_needs,
+                    teacher_intro=teacher_data.stable.raw_info.intro or "" if teacher_data.stable else "",
+                    teacher_summary=teacher_data.unstable.summary if teacher_data.unstable else "",
+                    teacher_subjects=", ".join(teacher_data.stable.profile.subject_areas)
+                    if teacher_data.stable
+                    else "",
+                    teacher_skills=", ".join(teacher_data.stable.profile.skills) if teacher_data.stable else "",
+                    teacher_transcripts="\n".join(
+                        grade.course_name
+                        for transcript in teacher_data.stable.profile.transcripts
+                        for grade in transcript.grades
+                    )
+                    if teacher_data.stable
+                    else "",
+                )
+                for teacher_data in teacher_datas
+            ]
+        )
+        return reasons
